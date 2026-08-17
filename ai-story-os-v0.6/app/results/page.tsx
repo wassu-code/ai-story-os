@@ -5,7 +5,7 @@ type D={stage:string;label:string;action:string;reason:string;voteRate:number;re
 const empty:M={days:0,views:0,votes:0,shares:0,saves:0,comments:0,returningVotes:0,totalVoters:0,profileVisits:0,linkClicks:0,freeJoins:0,paid:0};
 export default function Results(){const[m,setM]=useState<M>(empty);const[d,setD]=useState<D|null>(null);const[saved,setSaved]=useState('');
  useEffect(()=>{const x=localStorage.getItem('dailyMetrics');if(x)try{setM({...empty,...JSON.parse(x)});}catch{}},[]);
- async function analyze(next=M){const j=await fetch('/api/monetization',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(next)}).then(r=>r.json());setD(j.data)}
+ async function analyze(next:M){const j=await fetch('/api/monetization',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(next)}).then(r=>r.json());setD(j.data)}
  useEffect(()=>{analyze(m)},[m.days,m.views,m.votes,m.returningVotes,m.totalVoters,m.profileVisits,m.linkClicks,m.freeJoins,m.paid]);
  const fields:[keyof M,string][]=[['days','運用日数'],['views','再生'],['votes','投票'],['returningVotes','再参加者'],['totalVoters','計測した投票者'],['profileVisits','プロフィール訪問'],['linkClicks','リンククリック'],['freeJoins','無料参加'],['paid','購入']];
  function save(){localStorage.setItem('dailyMetrics',JSON.stringify(m));setSaved('保存しました。次のネタ生成時の判断材料になります。');analyze(m)}
