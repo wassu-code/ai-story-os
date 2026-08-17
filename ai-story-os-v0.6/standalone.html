@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>AI STORY OS v0.4 Standalone</title>
+<style>
+:root{--bg:#f5f5f2;--card:#fff;--text:#171717;--muted:#747474;--line:#e6e6e2;--soft:#fafafa;--danger:#b42318}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--text)}
+.app{max-width:640px;margin:auto;padding:18px 16px 96px}.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}.brand{font-weight:900;letter-spacing:.02em}.badge{font-size:12px;padding:7px 10px;border-radius:999px;background:#fff;border:1px solid var(--line)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:20px;margin:14px 0;box-shadow:0 1px 0 rgba(0,0,0,.02)}.small{font-size:12px;color:var(--muted)}.big{font-size:30px;font-weight:900}.muted{color:var(--muted)}
+.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}.m{background:var(--soft);padding:12px;border-radius:14px}.m b{display:block;font-size:20px}.choices{display:grid;grid-template-columns:1fr;gap:10px;margin-top:14px}.choice{padding:15px;border:1px solid var(--line);border-radius:15px;background:white;text-align:left;cursor:pointer}.choice.sel{outline:2px solid #111;background:#fafafa}.choice strong{font-size:18px}.btn{width:100%;padding:15px;border:0;border-radius:14px;background:#181818;color:white;font-weight:800;margin-top:12px;cursor:pointer}.btn.secondary{background:white;color:#181818;border:1px solid var(--line)}.btn:disabled{opacity:.45;cursor:not-allowed}
+.nav{position:fixed;bottom:12px;left:50%;transform:translateX(-50%);width:min(610px,calc(100% - 24px));background:#fff;border:1px solid var(--line);border-radius:18px;display:grid;grid-template-columns:repeat(3,1fr);padding:6px;box-shadow:0 8px 24px rgba(0,0,0,.08)}.nav button{border:0;background:transparent;padding:12px;border-radius:12px;cursor:pointer}.nav button.active{background:#f2f2f0;font-weight:800}.screen{display:none}.screen.on{display:block}.video{aspect-ratio:9/16;max-width:260px;margin:14px auto;background:linear-gradient(145deg,#222,#555);border-radius:18px;color:#fff;display:grid;place-items:center;text-align:center;padding:18px}.row{display:flex;gap:8px}.row>*{flex:1}.status{padding:10px 12px;border-radius:12px;background:#f7f7f5;margin-top:10px}.danger{color:var(--danger)}
+@media(min-width:560px){.choices{grid-template-columns:repeat(3,1fr)}}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top"><div class="brand">AI STORY</div><div class="badge" id="epBadge">EP 001</div></div>
+
+  <section id="today" class="screen on">
+    <div class="card">
+      <div class="small">YESTERDAY</div>
+      <div class="big" id="grade">—</div>
+      <div class="metrics">
+        <div class="m"><b id="views">0</b><span class="small">再生</span></div>
+        <div class="m"><b id="participation">0%</b><span class="small">参加率</span></div>
+        <div class="m"><b id="share">0%</b><span class="small">シェア率</span></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="small">TODAY</div>
+      <h1 id="todayTitle">次の展開を選ぶ</h1>
+      <p id="previousText" class="muted"></p>
+      <div id="choices" class="choices"></div>
+      <button id="adopt" class="btn" disabled>1つ選んでください</button>
+      <div id="todayStatus" class="status small">ローカル実行モード：ブラウザ内に保存されます。</div>
+    </div>
+  </section>
+
+  <section id="review" class="screen">
+    <div class="card">
+      <div class="small">READY</div>
+      <h1>投稿確認</h1>
+      <div class="video" id="videoPreview">VIDEO PREVIEW<br><span class="small">実メディア接続前</span></div>
+      <p><b id="hook"></b></p>
+      <p id="scene"></p>
+      <p><b>次どうする？</b><br><span id="audienceChoices"></span></p>
+      <button id="publish" class="btn">公開する</button>
+      <button id="regenerate" class="btn secondary">作り直す</button>
+      <div id="reviewStatus" class="status small"></div>
+    </div>
+  </section>
+
+  <section id="results" class="screen">
+    <div class="card">
+      <div class="small">RESULT</div>
+      <div class="big" id="resultGrade">—</div>
+      <div class="metrics">
+        <div class="m"><b id="rViews">0</b><span class="small">再生</span></div>
+        <div class="m"><b id="rParticipation">0%</b><span class="small">参加率</span></div>
+        <div class="m"><b id="rShare">0%</b><span class="small">シェア率</span></div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>AIの判断</h3>
+      <p><b>良かった</b><br><span id="worked">まだデータがありません。</span></p>
+      <p><b>改善</b><br><span id="improve">投稿後に自動分析されます。</span></p>
+      <p><b>次回</b><br><span id="nextHint">まず1本公開してください。</span></p>
+      <button id="nextEpisode" class="btn" style="display:none">次のEpisodeへ</button>
+      <button id="reset" class="btn secondary">デモを初期化</button>
+    </div>
+  </section>
+</div>
+
+<div class="nav">
+  <button data-screen="today" class="active">今日</button>
+  <button data-screen="review">投稿</button>
+  <button data-screen="results">結果</button>
+</div>
+
+<script>
+const KEY='ai-story-os-v04';
+const templates=[
+  {prev:'深夜、知らない番号から着信があった。', choices:[['A','電話に出る',91],['B','無視する',74],['C','番号を検索する',83]], hook:'電話に出た。聞こえてきたのは、自分の声だった。', scene:'声は「玄関を開けるな」とだけ言って切れた。直後、玄関が3回鳴った。', audience:['玄関を見る','部屋の電気を消す']},
+  {prev:'玄関が3回鳴った。外から足音は聞こえない。', choices:[['A','ドアを開ける',92],['B','警察に電話する',78],['C','ベランダから確認する',85]], hook:'ドアを開けた。そこには誰もいなかった。', scene:'ただ、床にスマホが置かれていた。画面には今この瞬間の自分の写真。', audience:['スマホを見る','触らず逃げる']},
+  {prev:'床に、自分を映したスマホが置かれていた。', choices:[['A','写真を開く',94],['B','スマホを壊す',72],['C','持ち主を探す',82]], hook:'写真を開いた。撮影時刻は「明日の23:14」。', scene:'写真の背景には、自分の部屋にはない赤い扉が写っている。', audience:['赤い扉を探す','写真を削除する']}
+];
+function initial(){return {episode:1,status:'WAITING_DECISION',selected:'',template:0,published:false,metrics:null,revision:0}}
+let state=load();
+function load(){try{return JSON.parse(localStorage.getItem(KEY))||initial()}catch{return initial()}}
+function save(){localStorage.setItem(KEY,JSON.stringify(state))}
+function tmpl(){return templates[state.template%templates.length]}
+function grade(m){if(!m)return '—'; if(m.participation>=13&&m.share>=3)return '◎ 強い'; if(m.participation>=8)return '○ 普通'; return '△ 弱い'}
+function metricsForEpisode(ep){const views=7200+ep*2873+(ep%3)*1100; const participation=+(8.8+(ep%4)*1.8).toFixed(1); const share=+(2.1+(ep%3)*.9).toFixed(1); return {views,participation,share}}
+function render(){
+  document.getElementById('epBadge').textContent='EP '+String(state.episode).padStart(3,'0');
+  const m=state.metrics;
+  document.getElementById('grade').textContent=grade(m); document.getElementById('views').textContent=m?m.views.toLocaleString():'0'; document.getElementById('participation').textContent=m?m.participation+'%':'0%'; document.getElementById('share').textContent=m?m.share+'%':'0%';
+  document.getElementById('previousText').textContent='前回：'+tmpl().prev;
+  const box=document.getElementById('choices'); box.innerHTML='';
+  tmpl().choices.forEach(([code,title,score])=>{const b=document.createElement('button');b.className='choice'+(state.selected===code?' sel':'');b.innerHTML='<strong>'+code+'</strong><br>'+title+'<br><span class="small">AI '+score+'</span>';b.onclick=()=>{state.selected=code;state.status='SELECTED';save();render()};box.appendChild(b)});
+  const adopt=document.getElementById('adopt'); adopt.disabled=!state.selected; adopt.textContent=state.selected?state.selected+'を採用':'1つ選んでください';
+  adopt.onclick=()=>{if(!state.selected)return;state.status='READY';save();renderReview();go('review')};
+  renderReview();renderResults();
+}
+function renderReview(){
+  document.getElementById('hook').textContent=tmpl().hook; document.getElementById('scene').textContent=tmpl().scene; document.getElementById('audienceChoices').innerHTML='A '+tmpl().audience[0]+'<br>B '+tmpl().audience[1];
+  document.getElementById('videoPreview').innerHTML='EP '+String(state.episode).padStart(3,'0')+'<br>'+tmpl().hook+'<br><span class="small">実メディア接続前</span>';
+  document.getElementById('reviewStatus').textContent=state.status==='READY'?'公開承認待ちです。':state.published?'公開済みです。':'先に「今日」で展開を選んでください。';
+  document.getElementById('publish').disabled=state.status!=='READY';
+}
+function renderResults(){
+  const m=state.metrics; document.getElementById('resultGrade').textContent=grade(m);document.getElementById('rViews').textContent=m?m.views.toLocaleString():'0';document.getElementById('rParticipation').textContent=m?m.participation+'%':'0%';document.getElementById('rShare').textContent=m?m.share+'%':'0%';
+  if(m){document.getElementById('worked').textContent='選択参加が発生し、次話への導線が機能しています。';document.getElementById('improve').textContent=m.participation<12?'選択肢をより対立の強い2択にします。':'冒頭2秒をさらに短くします。';document.getElementById('nextHint').textContent='現在の緊張感を維持して次の分岐へ。';document.getElementById('nextEpisode').style.display='block'}else{document.getElementById('nextEpisode').style.display='none'}
+}
+function go(id){document.querySelectorAll('.screen').forEach(x=>x.classList.remove('on'));document.getElementById(id).classList.add('on');document.querySelectorAll('.nav button').forEach(x=>x.classList.toggle('active',x.dataset.screen===id))}
+document.querySelectorAll('.nav button').forEach(b=>b.onclick=()=>go(b.dataset.screen));
+document.getElementById('publish').onclick=()=>{if(state.status!=='READY')return;state.published=true;state.status='PUBLISHED';state.metrics=metricsForEpisode(state.episode);save();render();go('results')};
+document.getElementById('regenerate').onclick=()=>{if(state.status!=='READY')return;state.revision++;document.getElementById('reviewStatus').textContent='動画だけ再生成しました（デモ '+state.revision+'回目）。';save()};
+document.getElementById('nextEpisode').onclick=()=>{state.episode++;state.template=(state.template+1)%templates.length;state.status='WAITING_DECISION';state.selected='';state.published=false;state.metrics=null;state.revision=0;save();render();go('today')};
+document.getElementById('reset').onclick=()=>{if(confirm('デモ状態を初期化しますか？')){state=initial();save();render();go('today')}};
+render();
+</script>
+</body>
+</html>
