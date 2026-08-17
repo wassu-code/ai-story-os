@@ -1,0 +1,2 @@
+import {NextResponse} from 'next/server'; import {getOpenAI} from '@/lib/openai';
+export async function POST(req:Request){const input=await req.json(); const client=getOpenAI(); if(!client)return NextResponse.json({mode:'mock',worked:'異常性',improve:'導入を短く',next:'不気味さ維持'}); const r=await client.responses.create({model:'gpt-5-mini',input:`あなたはAnalyst Engine。SNS指標から worked/improve/next の3点だけ日本語で簡潔に返す。データ:${JSON.stringify(input)}`}); return NextResponse.json({mode:'live',text:r.output_text});}
