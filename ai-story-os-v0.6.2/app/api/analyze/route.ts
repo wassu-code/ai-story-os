@@ -1,0 +1,2 @@
+import {NextResponse} from 'next/server'; import {getOpenAI} from '@/lib/openai';
+export async function POST(req:Request){const input=await req.json(); const client=getOpenAI(); if(!client)return NextResponse.json({mode:'mock',worked:'昨日の結果を今日に反映',improve:'選択肢をさらに短く',next:'翌日結果を見る理由を強くする'}); const r=await client.responses.create({model:'gpt-5-mini',input:`あなたは参加型SNSのAnalyst Engine。日常二択コンテンツについて worked/improve/next の3点だけ日本語で簡潔に返す。最重要はVIEW→VOTE→RETURN。売上より先に参加習慣を評価。データ:${JSON.stringify(input)}`}); return NextResponse.json({mode:'live',text:r.output_text});}
